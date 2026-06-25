@@ -1,4 +1,4 @@
-import { getAllTickets, getTicketById, createTicket, updateTicketAI, updateTicketStatus } from '../models/ticketModel.js'
+import { getAllTickets, getTicketById, createTicket, updateTicketAI, updateTicketStatus, searchTicketsInDB } from '../models/ticketModel.js'
 import { analyzeTicket } from '../services/aiService.js'
 
 const getTickets = async (req, res) => {
@@ -14,11 +14,9 @@ const getTickets = async (req, res) => {
 const getTicket = async (req, res) => {
     try {
         const ticket = await getTicketById(req.params.id)
-
         if (!ticket) {
             return res.json({ success: false, message: 'Ticket not found' })
         }
-
         res.json({ success: true, ticket })
     } catch (error) {
         console.log(error)
@@ -34,11 +32,8 @@ const createNewTicket = async (req, res) => {
             return res.json({ success: false, message: 'All fields are required' })
         }
 
-        // Step 1: Save ticket immediately — AI must not block ticket creation
         const ticketId = await createTicket({ title, description, customer_name, customer_email })
 
-        // Step 2: AI analysis in its own try/catch
-        // If Claude fails (API down, rate limit) — ticket is still saved
         try {
             const aiResult = await analyzeTicket(title, description)
             await updateTicketAI(ticketId, aiResult)
@@ -46,7 +41,6 @@ const createNewTicket = async (req, res) => {
             console.log('AI analysis failed, ticket saved without it:', aiError.message)
         }
 
-        // Step 3: Return the full ticket (with or without AI data)
         const ticket = await getTicketById(ticketId)
         res.json({ success: true, message: 'Ticket created successfully', ticket })
 
@@ -79,4 +73,21 @@ const changeStatus = async (req, res) => {
     }
 }
 
-export { getTickets, getTicket, createNewTicket, changeStatus }
+const searchTickets = async (req, res) => {
+    try {
+        const q = req.query.q
+
+        if (!q || q.trim() === '') {
+            return res.json({ success: false, message: 'Search query is required' })
+        }
+
+        const tickets = await searchTicketsInDB(q.trim())
+        res.json({ success: true, tickets })
+
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false, message: error.message })
+    }
+}
+
+export { getTickets, getTicket, createNewTicket, changeStatus, searchTickets }

@@ -12,17 +12,16 @@ const getTicketById = async (id) => {
         'SELECT * FROM tickets WHERE id = $1',
         [id]
     )
-    return rows[0] // rows[0] = first result, undefined if not found (same as Mongoose returning null)
+    return rows[0]
 }
 
 const createTicket = async ({ title, description, customer_name, customer_email }) => {
     const { rows } = await pool.query(
         `INSERT INTO tickets (title, description, customer_name, customer_email)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id`,
+         VALUES ($1, $2, $3, $4) RETURNING id`,
         [title, description, customer_name, customer_email]
     )
-    return rows[0].id // RETURNING id = PostgreSQL equivalent of Mongoose's _id after save
+    return rows[0].id
 }
 
 const updateTicketAI = async (id, { category, priority, summary }) => {
@@ -39,4 +38,21 @@ const updateTicketStatus = async (id, status) => {
     )
 }
 
-export { getAllTickets, getTicketById, createTicket, updateTicketAI, updateTicketStatus }
+const searchTicketsInDB = async (query) => {
+    const searchTerm = `%${query}%`
+    const { rows } = await pool.query(
+        `SELECT id, title, customer_name, customer_email, category, priority, status, created_at
+         FROM tickets
+         WHERE
+             title ILIKE $1 OR
+             description ILIKE $1 OR
+             customer_name ILIKE $1 OR
+             customer_email ILIKE $1 OR
+             category ILIKE $1
+         ORDER BY created_at DESC`,
+        [searchTerm]
+    )
+    return rows
+}
+
+export { getAllTickets, getTicketById, createTicket, updateTicketAI, updateTicketStatus, searchTicketsInDB }
