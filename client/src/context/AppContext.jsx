@@ -10,10 +10,12 @@ const AppContextProvider = (props) => {
     const [tickets, setTickets] = useState([])
     const [loading, setLoading] = useState(false)
 
-    const getAllTickets = async () => {
+    const getAllTickets = async (retryCount = 0) => {
         try {
             setLoading(true)
-            const { data } = await axios.get(backendUrl + '/api/ticket/list')
+            const { data } = await axios.get(backendUrl + '/api/ticket/list', {
+                timeout: 30000  // wait up to 30 seconds for Render to wake up
+            })
             if (data.success) {
                 setTickets(data.tickets)
             } else {
@@ -21,7 +23,14 @@ const AppContextProvider = (props) => {
             }
         } catch (error) {
             console.log(error)
-            toast.error(error.message)
+            // If request failed and we haven't retried yet — try once more
+            // Handles Render cold start timeout
+            if (retryCount === 0) {
+                console.log('Retrying after backend wake up...')
+                setTimeout(() => getAllTickets(1), 3000)  // retry after 3 seconds
+            } else {
+                toast.error('Could not connect to server. Please refresh.')
+            }
         } finally {
             setLoading(false)
         }
