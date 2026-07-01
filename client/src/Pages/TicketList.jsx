@@ -5,7 +5,7 @@ import { AppContext } from "../context/AppContext"
 import TicketCard from "../components/TicketCard"
 
 const TicketList = () => {
-    const { tickets, loading, backendUrl } = useContext(AppContext)
+    const { tickets, loading, backendUrl, token } = useContext(AppContext)
     const [searchParams] = useSearchParams()
 
     const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || 'All')
@@ -23,7 +23,6 @@ const TicketList = () => {
         if (priority) setFilterPriority(priority)
     }, [searchParams])
 
-    // Debounced search
     useEffect(() => {
         if (searchQuery.trim() === '') {
             setSearchActive(false)
@@ -34,7 +33,10 @@ const TicketList = () => {
         const timer = setTimeout(async () => {
             try {
                 setIsSearching(true)
-                const { data } = await axios.get(backendUrl + `/api/ticket/search?q=${encodeURIComponent(searchQuery)}`)
+                const { data } = await axios.get(
+                    backendUrl + `/api/ticket/search?q=${encodeURIComponent(searchQuery)}`,
+                    { headers: { token } }
+                )
                 if (data.success) {
                     setSearchResults(data.tickets)
                     setSearchActive(true)
@@ -77,7 +79,6 @@ const TicketList = () => {
                 <p className="text-sm text-gray-500">{displayTickets.length} results</p>
             </div>
 
-            {/* Search bar */}
             <div className="relative mb-4">
                 <input
                     type="text"
@@ -87,9 +88,7 @@ const TicketList = () => {
                     className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-400 pr-20"
                 />
                 {isSearching && (
-                    <span className="absolute right-3 top-2.5 text-xs text-gray-400">
-                        Searching...
-                    </span>
+                    <span className="absolute right-3 top-2.5 text-xs text-gray-400">Searching...</span>
                 )}
                 {searchQuery && !isSearching && (
                     <button
@@ -101,7 +100,6 @@ const TicketList = () => {
                 )}
             </div>
 
-            {/* Filters + Sort — hidden when search active */}
             {!searchActive && (
                 <div className="flex flex-wrap gap-3 mb-6">
                     <select

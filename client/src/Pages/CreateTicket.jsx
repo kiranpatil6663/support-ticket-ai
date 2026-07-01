@@ -6,7 +6,7 @@ import { AppContext } from "../context/AppContext"
 
 const CreateTicket = () => {
     const navigate = useNavigate()
-    const { backendUrl, getAllTickets } = useContext(AppContext)
+    const { backendUrl, getAllTickets, token } = useContext(AppContext)
 
     const [formData, setFormData] = useState({
         title: '',
@@ -29,7 +29,11 @@ const CreateTicket = () => {
 
         try {
             setSubmitting(true)
-            const { data } = await axios.post(backendUrl + '/api/ticket/create', formData)
+            const { data } = await axios.post(
+                backendUrl + '/api/ticket/create',
+                formData,
+                { headers: { token } }   // ← this was missing
+            )
 
             if (data.success) {
                 toast.success('Ticket submitted and analyzed by AI!')
