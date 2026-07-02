@@ -6,8 +6,8 @@ An AI-powered customer support ticket management system. Every ticket is automat
 
 ## Live Demo
 
-> Frontend: `https://supportdesk-ai.vercel.app` *(update after deployment)*  
-> Backend API: `https://supportdesk-ai-server.onrender.com` *(update after deployment)*
+> Live Site link: `https://support-ticket-ai.onrender.com`
+
 
 ---
 
